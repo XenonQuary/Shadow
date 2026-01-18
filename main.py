@@ -6,9 +6,8 @@ import time
 
 # -------------------- BOT SETUP --------------------
 intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
-
+intents.message_content = True  # Privileged Intent
+intents.members = True          # Privileged Intent
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 # -------------------- FEATURES --------------------
@@ -28,8 +27,10 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    now = time.time()
+
     # -------------------- ANTIINVITE --------------------
-    if features.get("antiinvite", False) and "discord.gg/" in message.content.lower():
+    if features.get("antiinvite") and "discord.gg/" in message.content.lower():
         try:
             await message.delete()
             await message.author.send("⚠️ 招待リンクは禁止です！")
@@ -37,7 +38,7 @@ async def on_message(message):
             pass
 
     # -------------------- ANTIMENTION --------------------
-    if features.get("antimention", False) and "@everyone" in message.content.lower():
+    if features.get("antimention") and "@everyone" in message.content.lower():
         try:
             await message.delete()
             await message.author.send("⚠️ @everyone の連続メンションは禁止です！")
@@ -45,7 +46,7 @@ async def on_message(message):
             pass
 
     # -------------------- ANTIAPP --------------------
-    if features.get("antiapp", False) and "<@&" in message.content:
+    if features.get("antiapp") and "<@&" in message.content:
         try:
             await message.delete()
             await message.author.send("⚠️ 外部アプリの利用は禁止です！")
@@ -53,8 +54,7 @@ async def on_message(message):
             pass
 
     # -------------------- ANTISPAM --------------------
-    if features.get("antispam", False):
-        now = time.time()
+    if features.get("antispam"):
         user_messages[message.author.id].append((message.content, now))
         msgs = list(user_messages[message.author.id])
         if sum(1 for m, t in msgs if m == message.content and now - t < 10) >= 5:
@@ -65,7 +65,6 @@ async def on_message(message):
                 pass
             user_messages[message.author.id].clear()
 
-    # -------------------- PROCESS COMMANDS --------------------
     await bot.process_commands(message)
 
 # -------------------- COMMANDS --------------------
@@ -78,7 +77,7 @@ async def clear(interaction: discord.Interaction, number: int):
     deleted = await interaction.channel.purge(limit=number)
     await interaction.response.send_message(f"🗑️ {len(deleted)} 件削除しました", ephemeral=True)
 
-@bot.tree.command(name="nuke", description="チャンネルをリセットします")
+@bot.tree.command(name="nuke", description="チャンネルを完全リセット")
 async def nuke(interaction: discord.Interaction):
     channel = interaction.channel
     new_channel = await channel.clone()
